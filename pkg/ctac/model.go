@@ -1,23 +1,5 @@
 package ctac
 
-struct Argument {
-	Title string
-	Premises []Premise
-	Conclusion string
-}
-
-struct Premise {
-	Id string `yaml: "id"`
-	Text string `yaml: "text"`
-	Confidence Confidence `yaml: "confidence"`
-}
-
-struct Conclusion {
-	Text string `yaml: text`
-	Modality Modality `yaml: "modality"`
-	Confidence Confidence `yaml: "confidence"`
-}
-
 type Modality string
 
 const (
@@ -32,3 +14,21 @@ const (
 	Medium Confidence = "medium"
 	High Confidence = "high"
 )
+
+type Argument struct {
+	Title string `yaml:"title"`
+	Premises []Premise `yaml:"premises"`
+	Conclusion Conclusion `yaml:"conclusion"`
+}
+
+type Premise struct {
+	Id string `yaml:"id"`
+	Text string `yaml:"text"`
+	Confidence Confidence `yaml:"confidence"`
+}
+
+type Conclusion struct {
+	Text string `yaml:"text"`
+	Modality Modality `yaml:"modality"`
+	Confidence Confidence `yaml:"confidence"`
+}
