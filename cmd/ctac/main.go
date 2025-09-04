@@ -16,5 +16,5 @@ func main (){
 	if err != nil {
 		fmt.Printf("cannot unmarshal data: %v", err)
 	}
-	fmt.Println(data)
+	fmt.Println(*data)
 }
