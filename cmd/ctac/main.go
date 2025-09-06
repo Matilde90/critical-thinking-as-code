@@ -17,4 +17,6 @@ func main (){
 		fmt.Printf("cannot unmarshal data: %v", err)
 	}
 	fmt.Println(*data)
+	result:= ctac.RunAllRules(*data)
+	fmt.Println(result)
 }

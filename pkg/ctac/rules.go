@@ -30,10 +30,22 @@ func  (r MissingPremiseRule) Check (argument Argument) []Issue {
 	if len(argument.Premises) == 0 {
 
 		return []Issue{{
-			RuleID: "Missing Premises",
+			RuleID: r.ID(),
 			Severity: "Error",
 			Message: "This argument has no premises",
 		}}
 	}
 	return  nil	
+}
+
+func RunAllRules (a Argument) []Issue{
+	rules := []Rule{
+		MissingPremiseRule{},
+	}
+	var issues []Issue
+
+	for _, r := range rules {
+		issues = append(issues, r.Check(a)...)
+	}
+	return issues
 }
