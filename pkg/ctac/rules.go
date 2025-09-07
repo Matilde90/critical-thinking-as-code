@@ -1,46 +1,78 @@
 package ctac
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Rule interface {
 	ID() string
 	Check(a Argument) []Issue
 }
 
 type Issue struct {
-	RuleID string
+	RuleID   string
 	Severity Severity
-	Message string
-} 
+	Message  string
+}
 
 type Severity string
 
 const (
-	Info Severity = "low"
+	Info    Severity = "low"
 	Warning Severity = "medium"
-	Error Severity = "high"
+	Error   Severity = "high"
 )
 
 type MissingPremiseRule struct{}
+type VaguenessDetector struct{}
 
 func (r MissingPremiseRule) ID() string {
 	return "CTAC001_MISSING_PREMISES"
 }
 
-func  (r MissingPremiseRule) Check (argument Argument) []Issue {
+func (r VaguenessDetector) ID() string {
+	return "CTAC002_VAGUENESS_DETECTOR"
+}
+
+func (r VaguenessDetector) Check(argument Argument) []Issue {
+	var issues []Issue
+
+	premises := argument.Premises
+
+	for _, p := range premises {
+		vagueWord := []string{"everyone knows", "someone", "probably", "likely"}
+		for _, v := range vagueWord {
+			if strings.Contains(p.Text, v) {
+				return []Issue{{
+					RuleID:   r.ID(),
+					Severity: "Error",
+					Message:  fmt.Sprintf("Premise %v contains vague words '%s'", p, v),
+				}}
+			}
+		}
+	}
+	return issues
+
+}
+
+func (r MissingPremiseRule) Check(argument Argument) []Issue {
 
 	if len(argument.Premises) == 0 {
 
 		return []Issue{{
-			RuleID: r.ID(),
+			RuleID:   r.ID(),
 			Severity: "Error",
-			Message: "This argument has no premises",
+			Message:  "This argument has no premises",
 		}}
 	}
-	return  nil	
+	return nil
 }
 
-func RunAllRules (a Argument) []Issue{
+func RunAllRules(a Argument) []Issue {
 	rules := []Rule{
 		MissingPremiseRule{},
+		VaguenessDetector{},
 	}
 	var issues []Issue
 
