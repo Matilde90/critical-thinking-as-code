@@ -2,12 +2,11 @@ package main
 
 import (
 	"ctac/pkg/ctac"
-	"fmt"
 	"flag"
+	"fmt"
 )
 
-
-func main (){
+func main() {
 	fmt.Println("Welcome to ctac, critical thinking as code")
 	fmt.Println()
 	file := flag.String("file", "examples/decision.yaml", "path to argument yaml file")
@@ -18,6 +17,6 @@ func main (){
 		fmt.Printf("cannot unmarshal data: %v", err)
 	}
 	fmt.Println(ctac.SummariseArgument(*argument))
-	result:= ctac.RunAllRules(*argument)
-	fmt.Println(result)
+	issues := ctac.RunAllRules(*argument)
+	fmt.Println(ctac.FormatIssueMessage(issues))
 }

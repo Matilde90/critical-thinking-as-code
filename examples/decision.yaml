@@ -1,11 +1,11 @@
 title: "Remote work harms collaboration"
 premises:
-  - id: P1
-    text: "Most teams collaborate better when co-located."
-    confidence: medium
-  - id: P2
-    text: "Our quarterly reviews someone show dips in cross-team pairing."
-    confidence: high
+- id: P1
+  text: "Most teams collaborate better when co-located someone."
+  confidence: medium
+- id: P2
+  text: "Our quarterly reviews show dips in cross-team pairing probably ."
+  confidence: high
 conclusion:
   text: "Therefore, remote work must be reduced."
   modality: "must"

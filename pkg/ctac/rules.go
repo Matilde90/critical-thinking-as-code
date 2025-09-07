@@ -40,15 +40,17 @@ func (r VaguenessDetector) Check(argument Argument) []Issue {
 
 	premises := argument.Premises
 
-	for _, p := range premises {
+	for i, p := range premises {
 		vagueWord := []string{"everyone knows", "someone", "probably", "likely"}
 		for _, v := range vagueWord {
 			if strings.Contains(p.Text, v) {
-				return []Issue{{
+				issues = append(issues, Issue{
 					RuleID:   r.ID(),
 					Severity: "Error",
-					Message:  fmt.Sprintf("Premise %v contains vague words '%s'", p, v),
-				}}
+					Message:  fmt.Sprintf("Premise %d '%v' contains vague words '%s'", i+1, p.Text, v),
+				})
+
+				break
 			}
 		}
 	}

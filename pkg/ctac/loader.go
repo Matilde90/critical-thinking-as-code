@@ -6,7 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Loader (filePath string)(*Argument, error){
+func Loader(filePath string) (*Argument, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
