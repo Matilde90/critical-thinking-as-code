@@ -41,7 +41,7 @@ func (r VaguenessDetector) Check(argument Argument) []Issue {
 	premises := argument.Premises
 
 	for i, p := range premises {
-		vagueWord := []string{"everyone knows", "someone", "probably", "likely"}
+		vagueWord := []string{"someone", "probably", "likely"}
 		for _, v := range vagueWord {
 			if strings.Contains(p.Text, v) {
 				issues = append(issues, Issue{

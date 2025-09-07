@@ -1,12 +1,11 @@
-title: "Remote work harms collaboration"
+title: "Quantum mechanics is the best theory"
 premises:
 - id: P1
-  text: "Most teams collaborate better when co-located someone."
-  confidence: medium
+  text: "likely quantum mechanics predicts experimental results with high accuracy."
+  confidence: high
 - id: P2
-  text: "Our quarterly reviews show dips in cross-team pairing probably ."
+  text: "Other theories cannot explain phenomena as well as quantum mechanics."
   confidence: high
 conclusion:
-  text: "Therefore, remote work must be reduced."
-  modality: "must"
-  confidence: low
+  text: "Quantum mechanics is the best theory"
+  confidence: high

@@ -10,6 +10,8 @@ func SummariseArgument(argument Argument) string {
 	for i, p := range argument.Premises {
 		summaryArgument += fmt.Sprintf("P%d. %s | Confidence: %s\n", i+1, p.Text, p.Confidence)
 	}
+
+	summaryArgument += fmt.Sprintf("--------------\nConclusion: %s | Confidence: %s\n", argument.Conclusion.Text, argument.Conclusion.Confidence)
 	return summaryArgument
 }
 
