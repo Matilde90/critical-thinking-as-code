@@ -4,31 +4,46 @@ import (
 	"testing"
 )
 
-func TestMissingPremiseRule(t *testing.T){
+func TestMissingPremiseRule(t *testing.T) {
 
-	arg1:= Argument{
-		Title: "Test",
-		Premises:[]Premise{
-			{Id: "P1", Text: "Some people like programming", Confidence: Medium},
+	rule := MissingPremiseRule{}
+	cases := []struct {
+		name       string
+		argument   Argument
+		wantIssues int
+	}{
+		{
+			name: "No premise, we want it to raise one issue",
+			argument: Argument{
+				Title:      "Test",
+				Premises:   []Premise{},
+				Conclusion: Conclusion{Text: "Programming is fun"},
+			},
+			wantIssues: 1,
 		},
-		Conclusion: Conclusion{Text:"Programming is fun"},
-	}
-
-	arg2:= Argument{
-		Title: "Test",
-		Premises:[]Premise{
+		{
+			name: "One premise, we want it to not raise any issue",
+			argument: Argument{
+				Title: "Test",
+				Premises: []Premise{
+					{Id: "P1", Text: "Some people like programming", Confidence: Medium},
+				},
+				Conclusion: Conclusion{Text: "Programming is fun"},
+			},
+			wantIssues: 0,
 		},
-		Conclusion: Conclusion{Text:"Programming is fun"},
 	}
 
-	issues1:=MissingPremiseRule{}.Check(arg1)
-	if len(issues1) != 0 {
-		t.Fatalf("esting argument %+v: got %d issue%s", arg1, len(issues1), plural(len(issues1)))
-	}
+	for _, tc := range cases {
+		tc := tc // making a copy per iteration so parallel subtests got correct case data
 
-		issues2:=MissingPremiseRule{}.Check(arg2)
-	if len(issues2) == 0 {
-		t.Fatalf("Testing argument %+v: got %d issue%s", arg2, len(issues2), plural(len(issues2)))
-	}
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
+			issues := rule.Check(tc.argument)
+			if got := len(issues); got != tc.wantIssues {
+				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
+			}
+		})
+	}
 }
