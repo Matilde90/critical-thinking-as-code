@@ -2,7 +2,7 @@ package ctac
 
 import (
 	"fmt"
-	"strings"
+	"regexp"
 )
 
 type Rule interface {
@@ -31,23 +31,52 @@ func (r MissingPremiseRule) ID() string {
 	return "CTAC001_MISSING_PREMISES"
 }
 
-func (r VaguenessDetector) ID() string {
+func (rule VaguenessDetector) ID() string {
 	return "CTAC002_VAGUENESS_DETECTOR"
 }
 
-func (r VaguenessDetector) Check(argument Argument) []Issue {
+func (rule VaguenessDetector) Check(argument Argument) []Issue {
 	var issues []Issue
 
 	premises := argument.Premises
 
 	for i, p := range premises {
-		vagueWord := []string{"someone", "probably", "likely"}
-		for _, v := range vagueWord {
-			if strings.Contains(p.Text, v) {
+		type vaguePhrase struct{
+			phrase string
+			reg *regexp.Regexp
+		}
+		vaguePhrases := []vaguePhrase{
+			{
+			phrase: "someone",
+			reg: regexp.MustCompile(`(?i)\bsomeone\b`),
+		}, {
+			phrase: "likely",
+			reg: regexp.MustCompile(`(?i)\blikely\b`),
+		},
+		{
+			phrase: "everyone thinks",
+			reg: regexp.MustCompile(`(?i)\beveryone thinks\b`),
+		},
+				{
+			phrase: "bprobably",
+			reg: regexp.MustCompile(`(?i)\bprobably\b`),
+		},
+				{
+			phrase: "emaybe",
+			reg: regexp.MustCompile(`(?i)\bmaybe\b`),
+		},
+				{
+			phrase: "everyone knowns",
+			reg: regexp.MustCompile(`(?i)\beveryone knows\b`),
+		},
+	}
+
+		for _, vaguePhrase := range vaguePhrases {
+			if vaguePhrase.reg.MatchString(p.Text){
 				issues = append(issues, Issue{
-					RuleID:   r.ID(),
+					RuleID:   rule.ID(),
 					Severity: "Error",
-					Message:  fmt.Sprintf("Premise %d '%v' contains vague words '%s'", i+1, p.Text, v),
+					Message:  fmt.Sprintf("Premise %d '%v' contains vague words '%s'", i+1, p.Text, vaguePhrase.phrase),
 				})
 
 				break

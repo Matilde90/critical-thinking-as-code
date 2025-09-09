@@ -1,7 +1,7 @@
 title: "Quantum mechanics is the best theory"
 premises:
 - id: P1
-  text: "likely quantum mechanics predicts experimental results with high accuracy."
+  text: "Everyone thinks that quantum mechanics predicts experimental results with high accuracy."
   confidence: high
 - id: P2
   text: "Other theories cannot explain phenomena as well as quantum mechanics."
