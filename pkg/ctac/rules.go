@@ -26,6 +26,7 @@ const (
 
 type MissingPremiseRule struct{}
 type VaguenessDetector struct{}
+type MissingConclusionRule struct {}
 
 func (r MissingPremiseRule) ID() string {
 	return "CTAC001_MISSING_PREMISES"
@@ -33,6 +34,10 @@ func (r MissingPremiseRule) ID() string {
 
 func (rule VaguenessDetector) ID() string {
 	return "CTAC002_VAGUENESS_DETECTOR"
+}
+
+func (rule MissingConclusionRule) ID() string {
+	return "CTAC003_VAGUENESS_DETECTOR"
 }
 
 func (rule VaguenessDetector) Check(argument Argument) []Issue {
@@ -58,15 +63,15 @@ func (rule VaguenessDetector) Check(argument Argument) []Issue {
 			reg: regexp.MustCompile(`(?i)\beveryone thinks\b`),
 		},
 				{
-			phrase: "bprobably",
+			phrase: "probably",
 			reg: regexp.MustCompile(`(?i)\bprobably\b`),
 		},
 				{
-			phrase: "emaybe",
+			phrase: "maybe",
 			reg: regexp.MustCompile(`(?i)\bmaybe\b`),
 		},
 				{
-			phrase: "everyone knowns",
+			phrase: "everyone knows",
 			reg: regexp.MustCompile(`(?i)\beveryone knows\b`),
 		},
 	}
@@ -79,7 +84,6 @@ func (rule VaguenessDetector) Check(argument Argument) []Issue {
 					Message:  fmt.Sprintf("Premise %d '%v' contains vague words '%s'", i+1, p.Text, vaguePhrase.phrase),
 				})
 
-				break
 			}
 		}
 	}
@@ -95,6 +99,18 @@ func (r MissingPremiseRule) Check(argument Argument) []Issue {
 			RuleID:   r.ID(),
 			Severity: "Error",
 			Message:  "This argument has no premises",
+		}}
+	}
+	return nil
+}
+
+func (r MissingConclusionRule) Check(argument Argument) []Issue {
+
+	if argument.Conclusion.Text == "" {
+		return []Issue{{
+			RuleID: r.ID(),
+			Severity: "Error",
+			Message: "This argument has no conclusion",
 		}}
 	}
 	return nil
