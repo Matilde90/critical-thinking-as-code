@@ -47,3 +47,42 @@ func TestMissingPremiseRule(t *testing.T) {
 		})
 	}
 }
+
+func TestVaguenessDetector(t *testing.T) {
+
+	rule := VaguenessDetector{}
+
+	cases := []struct {
+		name       string
+		argument   Argument
+		wantIssues int
+	}{{
+		name: "One vague word included, one issue",
+		argument: Argument{
+			Title: "argument",
+			Premises: []Premise{
+				{Text: "Everyone knows that people slack off when working from home"},
+			},
+			Conclusion: Conclusion{
+				Text: "Working from home should be banned",
+			},
+		},
+		wantIssues: 1,
+	}}
+
+	for _, tc := range cases {
+
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			issues := rule.Check(tc.argument)
+
+			if got := len(issues); got != tc.wantIssues {
+				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
+			}
+		})
+
+	}
+}
