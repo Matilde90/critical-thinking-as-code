@@ -84,6 +84,9 @@ var vaguePhrases = []vaguePhrase{
 	},
 }
 
+var regexDigit = regexp.MustCompile("[0-9]+")
+var regexQuantificationPhrase = regexp.MustCompile(`(?i)(\bsignificant|\bdecrease|\bmost\b|\bincrease|\bdecline\b|\bpercent(age?)\b|%|\bmore\b|\bless\b|\brate\b|\btrend\b)`)
+
 func (rule VaguenessDetector) Check(argument Argument) []Issue {
 	var issues []Issue
 
@@ -95,8 +98,8 @@ func (rule VaguenessDetector) Check(argument Argument) []Issue {
 			if vaguePhrase.reg.MatchString(p.Text) {
 				issues = append(issues, Issue{
 					RuleID:   rule.ID(),
-					Severity: SeverityError,
-					Message:  fmt.Sprintf("Premise %d '%v' contains vague words '%s'", i+1, p.Text, vaguePhrase.phrase),
+					Severity: SeverityWarning,
+					Message:  fmt.Sprintf("Premise %d '%q' contains vague words '%s'", i+1, p.Text, vaguePhrase.phrase),
 					Hint:     "",
 				})
 
@@ -150,7 +153,7 @@ func (r SinglePremiseRule) Check(argument Argument) []Issue {
 
 func (r ModalityMismatchRule) Check(argument Argument) []Issue {
 
-	if argument.Conclusion.Modality == "must" {
+	if argument.Conclusion.Modality == ModalityMust {
 
 		count := 0
 		for _, p := range argument.Premises {
@@ -162,7 +165,7 @@ func (r ModalityMismatchRule) Check(argument Argument) []Issue {
 			return []Issue{{
 				RuleID:   r.ID(),
 				Severity: SeverityError,
-				Message:  "Modality mismatch",
+				Message:  "Strong conclusion modality (‘must’) with weak/insufficient support.",
 				Hint:     "Add at least one high-confidence premise or lower the modality (‘must’ → ‘should’)",
 			}}
 		}
@@ -178,15 +181,14 @@ func (rule QuantificationRequiredRule) Check(argument Argument) []Issue {
 
 	for i, p := range premises {
 
-		regexDigit := regexp.MustCompile("[0-9]+")
-		regexQuantificationPhrase := regexp.MustCompile(`(?i)(\bsignificant|\bdecrease|\bmost\b|\bincrease|\bdecline\b|\bpercent(age?)\b|%|\bmore|less|rate|trend)`)
-
 		if regexQuantificationPhrase.MatchString(p.Text) && !regexDigit.MatchString(p.Text) {
+
+			//TODO: raise one issue per premise and list all hits
 			issues = append(issues, Issue{
 				RuleID:   rule.ID(),
 				Severity: SeverityError,
-				Message:  fmt.Sprintf("premise %d '%v' uses quantification but omits reference to actual numbers", i+1, p.Text),
-				Hint:     "Provide a number (e.g., ‘18%’) or sample size supporting ‘significant/most/increase'",
+				Message:  fmt.Sprintf("premise %d '%q' uses quantification but omits reference to actual numbers", i+1, p.Text),
+				Hint:     "Provide a number (e.g., ‘18%’) or sample size supporting significant/most/increase'",
 			})
 
 		}

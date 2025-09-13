@@ -3,8 +3,8 @@ package ctac
 type Modality string
 
 const (
-	Must Modality = "must"
-	Should Modality = "should"
+	ModalityMust Modality = "must"
+	ModalityShould Modality = "should"
 )
 
 type Confidence string

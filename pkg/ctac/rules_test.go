@@ -180,7 +180,7 @@ func TestModalityMismatchRule(t *testing.T) {
 				{Text: "Productivity decreases when working from home", Confidence: Low},
 			},
 			Conclusion: Conclusion{
-				Text: "Working from home should be banned", Modality: "must", Confidence: "high",
+				Text: "Working from home should be banned", Modality: ModalityMust, Confidence: High,
 			},
 		},
 		wantIssues: 1,
@@ -227,7 +227,7 @@ func TestQuantificationRequiredRule(t *testing.T) {
 					{Text: "Productivity decreases when working from home", Confidence: Low},
 				},
 				Conclusion: Conclusion{
-					Text: "Working from home should be banned", Modality: Should, Confidence: Medium,
+					Text: "Working from home should be banned", Modality: ModalityShould, Confidence: Medium,
 				},
 			},
 			wantIssues: 2,
