@@ -29,6 +29,7 @@ type VaguenessDetector struct{}
 type MissingConclusionRule struct{}
 type SinglePremiseRule struct{}
 type ModalityMismatchRule struct{}
+type QuantificationRequiredRule struct{}
 
 func (r MissingPremiseRule) ID() string {
 	return "CTAC001_MISSING_PREMISES"
@@ -48,6 +49,10 @@ func (rule SinglePremiseRule) ID() string {
 
 func (rule ModalityMismatchRule) ID() string {
 	return "CTA005_MODALITY_MISMATCH_RULE"
+}
+
+func (rule QuantificationRequiredRule) ID() string {
+	return "CTA006_QUANTIFICATION_REQUIRED"
 }
 
 func (rule VaguenessDetector) Check(argument Argument) []Issue {
@@ -159,6 +164,31 @@ func (r ModalityMismatchRule) Check(argument Argument) []Issue {
 	}
 	return nil
 }
+
+func (rule QuantificationRequiredRule) Check(argument Argument) []Issue {
+
+	var issues []Issue
+
+	premises := argument.Premises
+
+	for i, p := range premises {
+
+		regexDigit := regexp.MustCompile("[0-9]+")
+		regexQuantificationPhrase := regexp.MustCompile(`(?i)(\bsignificant|decrease|most|increase)`) 
+		
+		if regexQuantificationPhrase.MatchString(p.Text) && !regexDigit.MatchString(p.Text){
+			issues = append(issues, Issue{
+				RuleID: rule.ID(),
+				Severity: Error,
+				Message: fmt.Sprintf("premise %d '%v' uses quantification but omitts reference to actual numbers", i+1, p.Text),
+			})
+			
+		}
+	}
+
+	return issues
+}
+
 
 func RunAllRules(a Argument) []Issue {
 	rules := []Rule{

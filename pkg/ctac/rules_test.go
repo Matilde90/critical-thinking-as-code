@@ -44,7 +44,7 @@ func TestMissingPremiseRule(t *testing.T) {
 			t.Parallel()
 
 			issues := rule.Check(tc.argument)
-			got:= len(issues)
+			got := len(issues)
 			if got != tc.wantIssues {
 				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
 			}
@@ -93,7 +93,7 @@ func TestVaguenessDetector(t *testing.T) {
 			t.Parallel()
 
 			issues := rule.Check(tc.argument)
-			got:= len(issues)
+			got := len(issues)
 			if got != tc.wantIssues {
 				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
 			}
@@ -140,9 +140,9 @@ func TestSinglePremiseRule(t *testing.T) {
 	rule := SinglePremiseRule{}
 
 	cases := TestCases{{
-		name: "Single premise included",
+		name: "Single premise included, one issue",
 		argument: Argument{
-			Title: "Single premise",
+			Title: "Banning working from home",
 			Premises: []Premise{
 				{Text: "People slack off when working from home"},
 			},
@@ -174,10 +174,10 @@ func TestModalityMismatchRule(t *testing.T) {
 	cases := TestCases{{
 		name: "Modality mismatch should raise one issue",
 		argument: Argument{
-			Title: "Single premise",
+			Title: "Banning working from home",
 			Premises: []Premise{
-				{Text: "People slack off when working from home", Confidence: "medium" },
-				{Text: "Productivity decreases when working from home",Confidence: "low" },
+				{Text: "People slack off when working from home", Confidence: "medium"},
+				{Text: "Productivity decreases when working from home", Confidence: "low"},
 			},
 			Conclusion: Conclusion{
 				Text: "Working from home should be banned", Modality: "must", Confidence: "high",
@@ -185,6 +185,53 @@ func TestModalityMismatchRule(t *testing.T) {
 		},
 		wantIssues: 1,
 	}}
+	for _, tc := range cases {
+
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			issues := rule.Check(tc.argument)
+			if got := len(issues); got != tc.wantIssues {
+				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
+			}
+		})
+
+	}
+}
+
+func TestQuantificationRequiredRule(t *testing.T) {
+
+	rule := QuantificationRequiredRule{}
+
+	cases := TestCases{{
+		name: "Quantified claims without precise number should raise issue",
+		argument: Argument{
+			Title: "Single premise",
+			Premises: []Premise{
+				{Text: "A significant portion of workers slack off when working from home", Confidence: "medium"},
+				{Text: "Productivity decreases by 20 % when working from home", Confidence: "low"},
+			},
+			Conclusion: Conclusion{
+				Text: "Working from home should be banned", Modality: "should", Confidence: "medium",
+			},
+		},
+		wantIssues: 1,
+	},
+		{
+			name: "Quantified claims without precise number should raise issue",
+			argument: Argument{
+				Title: "Single premise",
+				Premises: []Premise{
+					{Text: "A significant portion of workers slack off when working from home", Confidence: "medium"},
+					{Text: "Productivity decreases when working from home", Confidence: "low"},
+				},
+				Conclusion: Conclusion{
+					Text: "Working from home should be banned", Modality: "should", Confidence: "medium",
+				},
+			},
+			wantIssues: 2,
+		}}
 	for _, tc := range cases {
 
 		tc := tc
