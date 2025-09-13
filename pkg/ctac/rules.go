@@ -27,6 +27,7 @@ const (
 type MissingPremiseRule struct{}
 type VaguenessDetector struct{}
 type MissingConclusionRule struct {}
+type SinglePremiseRule struct {}
 
 func (r MissingPremiseRule) ID() string {
 	return "CTAC001_MISSING_PREMISES"
@@ -37,7 +38,11 @@ func (rule VaguenessDetector) ID() string {
 }
 
 func (rule MissingConclusionRule) ID() string {
-	return "CTAC003_VAGUENESS_DETECTOR"
+	return "CTAC003_MISSING_CONCLUSION_RULE"
+}
+
+func (rule SinglePremiseRule) ID()string{
+	return "CTA004_SINGLE_PREMISE_RULE"
 }
 
 func (rule VaguenessDetector) Check(argument Argument) []Issue {
@@ -111,6 +116,19 @@ func (r MissingConclusionRule) Check(argument Argument) []Issue {
 			RuleID: r.ID(),
 			Severity: "Error",
 			Message: "This argument has no conclusion",
+		}}
+	}
+	return nil
+}
+
+func (r SinglePremiseRule) Check(argument Argument) []Issue {
+
+	if len(argument.Premises) == 1 {
+
+		return []Issue{{
+			RuleID:   r.ID(),
+			Severity: "Warning",
+			Message:  "Single-premise arguments are often weak",
 		}}
 	}
 	return nil

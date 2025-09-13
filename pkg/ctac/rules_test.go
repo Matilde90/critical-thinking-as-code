@@ -24,11 +24,12 @@ func TestMissingPremiseRule(t *testing.T) {
 			wantIssues: 1,
 		},
 		{
-			name: "One premise, we want it to not raise any issue",
+			name: "Two premises, we want it to not raise any issue",
 			argument: Argument{
 				Title: "Test",
 				Premises: []Premise{
 					{Id: "P1", Text: "Some people like programming", Confidence: Medium},
+					{Id: "P2", Text: "The people who like programming are the majority of the population", Confidence: Medium},
 				},
 				Conclusion: Conclusion{Text: "Programming is fun"},
 			},
@@ -43,7 +44,8 @@ func TestMissingPremiseRule(t *testing.T) {
 			t.Parallel()
 
 			issues := rule.Check(tc.argument)
-			if got := len(issues); got != tc.wantIssues {
+			got:= len(issues)
+			if got != tc.wantIssues {
 				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
 			}
 		})
@@ -59,7 +61,8 @@ func TestVaguenessDetector(t *testing.T) {
 		argument: Argument{
 			Title: "One vague word",
 			Premises: []Premise{
-				{Text: "Everyone knows that people slack off when working from home"},
+				{Id: "P1", Confidence: "Medium", Text: "Everyone knows that people slack off when working from home"},
+				{Id: "P2", Confidence: "Medium", Text: "Slacking off is bad"},
 			},
 			Conclusion: Conclusion{
 				Text: "Working from home should be banned",
@@ -73,6 +76,7 @@ func TestVaguenessDetector(t *testing.T) {
 				Title: "Two vague words",
 				Premises: []Premise{
 					{Text: "Everyone knows that it is likely that people slack off when working from home"},
+					{Text: "Slacking off is bad"},
 				},
 				Conclusion: Conclusion{
 					Text: "Working from home should be banned",
@@ -89,8 +93,8 @@ func TestVaguenessDetector(t *testing.T) {
 			t.Parallel()
 
 			issues := rule.Check(tc.argument)
-
-			if got := len(issues); got != tc.wantIssues {
+			got:= len(issues)
+			if got != tc.wantIssues {
 				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
 			}
 		})
@@ -107,10 +111,43 @@ func TestMissingConclusionRule(t *testing.T) {
 		argument: Argument{
 			Title: "Slacking at work",
 			Premises: []Premise{
-				{Text: "Everyone knows that people slack off when working from home"},
+				{Text: "People slack off when working from home"},
+				{Text: "Slacking off is bad"},
 			},
 			Conclusion: Conclusion{
 				Text: "",
+			},
+		},
+		wantIssues: 1,
+	}}
+	for _, tc := range cases {
+
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			issues := rule.Check(tc.argument)
+			if got := len(issues); got != tc.wantIssues {
+				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
+			}
+		})
+
+	}
+}
+
+func TestSinglePremiseRule(t *testing.T) {
+
+	rule := SinglePremiseRule{}
+
+	cases := TestCases{{
+		name: "Single premise included",
+		argument: Argument{
+			Title: "Single premise",
+			Premises: []Premise{
+				{Text: "People slack off when working from home"},
+			},
+			Conclusion: Conclusion{
+				Text: "Working from home should be banned",
 			},
 		},
 		wantIssues: 1,
