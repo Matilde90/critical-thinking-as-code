@@ -14,14 +14,15 @@ type Issue struct {
 	RuleID   string
 	Severity Severity
 	Message  string
+	Hint     string
 }
 
 type Severity string
 
 const (
-	Info    Severity = "low"
-	Warning Severity = "medium"
-	Error   Severity = "high"
+	SeverityInfo    Severity = "info"
+	SeverityWarning Severity = "warning"
+	SeverityError   Severity = "error"
 )
 
 type MissingPremiseRule struct{}
@@ -44,15 +45,43 @@ func (rule MissingConclusionRule) ID() string {
 }
 
 func (rule SinglePremiseRule) ID() string {
-	return "CTA004_SINGLE_PREMISE_RULE"
+	return "CTAC004_SINGLE_PREMISE_RULE"
 }
 
 func (rule ModalityMismatchRule) ID() string {
-	return "CTA005_MODALITY_MISMATCH_RULE"
+	return "CTAC005_MODALITY_MISMATCH_RULE"
 }
 
 func (rule QuantificationRequiredRule) ID() string {
-	return "CTA006_QUANTIFICATION_REQUIRED"
+	return "CTAC006_QUANTIFICATION_REQUIRED"
+}
+
+type vaguePhrase struct {
+	phrase string
+	reg    *regexp.Regexp
+}
+
+var vaguePhrases = []vaguePhrase{
+	{
+		phrase: "someone",
+		reg:    regexp.MustCompile(`(?i)\bsomeone\b`),
+	},
+	{
+		phrase: "some",
+		reg:    regexp.MustCompile(`(?i)\bsome\b`),
+	},
+	{
+		phrase: "everyone thinks",
+		reg:    regexp.MustCompile(`(?i)\beveryone thinks\b`),
+	},
+	{
+		phrase: "maybe",
+		reg:    regexp.MustCompile(`(?i)\bmaybe\b`),
+	},
+	{
+		phrase: "everyone knows",
+		reg:    regexp.MustCompile(`(?i)\beveryone knows\b`),
+	},
 }
 
 func (rule VaguenessDetector) Check(argument Argument) []Issue {
@@ -61,42 +90,14 @@ func (rule VaguenessDetector) Check(argument Argument) []Issue {
 	premises := argument.Premises
 
 	for i, p := range premises {
-		type vaguePhrase struct {
-			phrase string
-			reg    *regexp.Regexp
-		}
-		vaguePhrases := []vaguePhrase{
-			{
-				phrase: "someone",
-				reg:    regexp.MustCompile(`(?i)\bsomeone\b`),
-			}, {
-				phrase: "likely",
-				reg:    regexp.MustCompile(`(?i)\blikely\b`),
-			},
-			{
-				phrase: "everyone thinks",
-				reg:    regexp.MustCompile(`(?i)\beveryone thinks\b`),
-			},
-			{
-				phrase: "probably",
-				reg:    regexp.MustCompile(`(?i)\bprobably\b`),
-			},
-			{
-				phrase: "maybe",
-				reg:    regexp.MustCompile(`(?i)\bmaybe\b`),
-			},
-			{
-				phrase: "everyone knows",
-				reg:    regexp.MustCompile(`(?i)\beveryone knows\b`),
-			},
-		}
 
 		for _, vaguePhrase := range vaguePhrases {
 			if vaguePhrase.reg.MatchString(p.Text) {
 				issues = append(issues, Issue{
 					RuleID:   rule.ID(),
-					Severity: "Error",
+					Severity: SeverityError,
 					Message:  fmt.Sprintf("Premise %d '%v' contains vague words '%s'", i+1, p.Text, vaguePhrase.phrase),
+					Hint:     "",
 				})
 
 			}
@@ -112,8 +113,9 @@ func (r MissingPremiseRule) Check(argument Argument) []Issue {
 
 		return []Issue{{
 			RuleID:   r.ID(),
-			Severity: "Error",
+			Severity: SeverityError,
 			Message:  "This argument has no premises",
+			Hint:     "Add a premise",
 		}}
 	}
 	return nil
@@ -124,8 +126,9 @@ func (r MissingConclusionRule) Check(argument Argument) []Issue {
 	if argument.Conclusion.Text == "" {
 		return []Issue{{
 			RuleID:   r.ID(),
-			Severity: "Error",
+			Severity: SeverityError,
 			Message:  "This argument has no conclusion",
+			Hint:     "Add the conclusion",
 		}}
 	}
 	return nil
@@ -137,8 +140,9 @@ func (r SinglePremiseRule) Check(argument Argument) []Issue {
 
 		return []Issue{{
 			RuleID:   r.ID(),
-			Severity: "Warning",
+			Severity: SeverityWarning,
 			Message:  "Single-premise arguments are often weak",
+			Hint:     "Add another premise",
 		}}
 	}
 	return nil
@@ -146,19 +150,20 @@ func (r SinglePremiseRule) Check(argument Argument) []Issue {
 
 func (r ModalityMismatchRule) Check(argument Argument) []Issue {
 
-	if argument.Conclusion.Confidence == "high" && argument.Conclusion.Modality == "must" {
+	if argument.Conclusion.Modality == "must" {
 
 		count := 0
 		for _, p := range argument.Premises {
-			if p.Confidence == "high" {
+			if p.Confidence == High {
 				count++
 			}
 		}
 		if count == 0 {
 			return []Issue{{
 				RuleID:   r.ID(),
-				Severity: "Error",
+				Severity: SeverityError,
 				Message:  "Modality mismatch",
+				Hint:     "Add at least one high-confidence premise or lower the modality (‘must’ → ‘should’)",
 			}}
 		}
 	}
@@ -174,26 +179,30 @@ func (rule QuantificationRequiredRule) Check(argument Argument) []Issue {
 	for i, p := range premises {
 
 		regexDigit := regexp.MustCompile("[0-9]+")
-		regexQuantificationPhrase := regexp.MustCompile(`(?i)(\bsignificant|decrease|most|increase)`) 
-		
-		if regexQuantificationPhrase.MatchString(p.Text) && !regexDigit.MatchString(p.Text){
+		regexQuantificationPhrase := regexp.MustCompile(`(?i)(\bsignificant|\bdecrease|\bmost\b|\bincrease|\bdecline\b|\bpercent(age?)\b|%|\bmore|less|rate|trend)`)
+
+		if regexQuantificationPhrase.MatchString(p.Text) && !regexDigit.MatchString(p.Text) {
 			issues = append(issues, Issue{
-				RuleID: rule.ID(),
-				Severity: Error,
-				Message: fmt.Sprintf("premise %d '%v' uses quantification but omitts reference to actual numbers", i+1, p.Text),
+				RuleID:   rule.ID(),
+				Severity: SeverityError,
+				Message:  fmt.Sprintf("premise %d '%v' uses quantification but omits reference to actual numbers", i+1, p.Text),
+				Hint:     "Provide a number (e.g., ‘18%’) or sample size supporting ‘significant/most/increase'",
 			})
-			
+
 		}
 	}
 
 	return issues
 }
 
-
 func RunAllRules(a Argument) []Issue {
 	rules := []Rule{
 		MissingPremiseRule{},
 		VaguenessDetector{},
+		MissingConclusionRule{},
+		SinglePremiseRule{},
+		ModalityMismatchRule{},
+		QuantificationRequiredRule{},
 	}
 	var issues []Issue
 

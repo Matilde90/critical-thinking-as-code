@@ -61,8 +61,8 @@ func TestVaguenessDetector(t *testing.T) {
 		argument: Argument{
 			Title: "One vague word",
 			Premises: []Premise{
-				{Id: "P1", Confidence: "Medium", Text: "Everyone knows that people slack off when working from home"},
-				{Id: "P2", Confidence: "Medium", Text: "Slacking off is bad"},
+				{Id: "P1", Confidence: Medium, Text: "Everyone knows that people slack off when working from home"},
+				{Id: "P2", Confidence: Medium, Text: "Slacking off is bad"},
 			},
 			Conclusion: Conclusion{
 				Text: "Working from home should be banned",
@@ -75,8 +75,8 @@ func TestVaguenessDetector(t *testing.T) {
 			argument: Argument{
 				Title: "Two vague words",
 				Premises: []Premise{
-					{Text: "Everyone knows that it is likely that people slack off when working from home"},
-					{Text: "Slacking off is bad"},
+					{Text: "Everyone knows that people slack off when working from home"},
+					{Text: "Maybe slacking off is bad"},
 				},
 				Conclusion: Conclusion{
 					Text: "Working from home should be banned",
@@ -176,8 +176,8 @@ func TestModalityMismatchRule(t *testing.T) {
 		argument: Argument{
 			Title: "Banning working from home",
 			Premises: []Premise{
-				{Text: "People slack off when working from home", Confidence: "medium"},
-				{Text: "Productivity decreases when working from home", Confidence: "low"},
+				{Text: "People slack off when working from home", Confidence: Medium},
+				{Text: "Productivity decreases when working from home", Confidence: Low},
 			},
 			Conclusion: Conclusion{
 				Text: "Working from home should be banned", Modality: "must", Confidence: "high",
@@ -221,13 +221,13 @@ func TestQuantificationRequiredRule(t *testing.T) {
 		{
 			name: "Quantified claims without precise number should raise issue",
 			argument: Argument{
-				Title: "Single premise",
+				Title: "Quantification",
 				Premises: []Premise{
-					{Text: "A significant portion of workers slack off when working from home", Confidence: "medium"},
-					{Text: "Productivity decreases when working from home", Confidence: "low"},
+					{Text: "A significant portion of workers slack off when working from home", Confidence: Medium},
+					{Text: "Productivity decreases when working from home", Confidence: Low},
 				},
 				Conclusion: Conclusion{
-					Text: "Working from home should be banned", Modality: "should", Confidence: "medium",
+					Text: "Working from home should be banned", Modality: Should, Confidence: Medium,
 				},
 			},
 			wantIssues: 2,
