@@ -166,3 +166,36 @@ func TestSinglePremiseRule(t *testing.T) {
 
 	}
 }
+
+func TestModalityMismatchRule(t *testing.T) {
+
+	rule := ModalityMismatchRule{}
+
+	cases := TestCases{{
+		name: "Modality mismatch should raise one issue",
+		argument: Argument{
+			Title: "Single premise",
+			Premises: []Premise{
+				{Text: "People slack off when working from home", Confidence: "medium" },
+				{Text: "Productivity decreases when working from home",Confidence: "low" },
+			},
+			Conclusion: Conclusion{
+				Text: "Working from home should be banned", Modality: "must", Confidence: "high",
+			},
+		},
+		wantIssues: 1,
+	}}
+	for _, tc := range cases {
+
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			issues := rule.Check(tc.argument)
+			if got := len(issues); got != tc.wantIssues {
+				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
+			}
+		})
+
+	}
+}
