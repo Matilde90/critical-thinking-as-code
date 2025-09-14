@@ -56,20 +56,35 @@ func TestVaguenessDetector(t *testing.T) {
 
 	rule := VaguenessDetector{}
 
-	cases := TestCases{{
-		name: "One vague word included, one issue",
-		argument: Argument{
-			Title: "One vague word",
-			Premises: []Premise{
-				{Id: "P1", Confidence: Medium, Text: "Everyone knows that people slack off when working from home"},
-				{Id: "P2", Confidence: Medium, Text: "Slacking off is bad"},
+	cases := TestCases{
+		{
+			name: "No vague word included, no issue",
+			argument: Argument{
+				Title: "No vague word",
+				Premises: []Premise{
+					{Id: "P1", Confidence: Medium, Text: "People slack off when working from home"},
+					{Id: "P2", Confidence: Medium, Text: "Slacking off is bad"},
+				},
+				Conclusion: Conclusion{
+					Text: "Working from home should be banned",
+				},
 			},
-			Conclusion: Conclusion{
-				Text: "Working from home should be banned",
-			},
+			wantIssues: 0,
 		},
-		wantIssues: 1,
-	},
+		{
+			name: "One vague word included, one issue",
+			argument: Argument{
+				Title: "One vague word",
+				Premises: []Premise{
+					{Id: "P1", Confidence: Medium, Text: "Everyone knows that people slack off when working from home"},
+					{Id: "P2", Confidence: Medium, Text: "Slacking off is bad"},
+				},
+				Conclusion: Conclusion{
+					Text: "Working from home should be banned",
+				},
+			},
+			wantIssues: 1,
+		},
 		{
 			name: "Two vague words included, two issues",
 			argument: Argument{

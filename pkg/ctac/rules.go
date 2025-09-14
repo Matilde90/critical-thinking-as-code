@@ -3,6 +3,7 @@ package ctac
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 type Rule interface {
@@ -91,23 +92,30 @@ func (rule VaguenessDetector) Check(argument Argument) []Issue {
 	var issues []Issue
 
 	premises := argument.Premises
+	var spottedVagueWords string
 
-	for i, p := range premises {
+	for _, p := range premises {
 
 		for _, vaguePhrase := range vaguePhrases {
 			if vaguePhrase.reg.MatchString(p.Text) {
-				issues = append(issues, Issue{
-					RuleID:   rule.ID(),
-					Severity: SeverityWarning,
-					Message:  fmt.Sprintf("Premise %d '%q' contains vague words '%s'", i+1, p.Text, vaguePhrase.phrase),
-					Hint:     "",
-				})
 
+				spottedVagueWords = spottedVagueWords + ", " + vaguePhrase.phrase
 			}
 		}
+		if len(spottedVagueWords) > 0 {
+
+			issues = append(issues, Issue{
+				RuleID:   rule.ID(),
+				Severity: SeverityWarning,
+				Message:  fmt.Sprintf("Premise %s %q contains vague words '%s'", p.Id, p.Text, strings.TrimLeft(spottedVagueWords, " ,")),
+				Hint:     "Remove use of vague words by using more precise language",
+			})
+		}
+
+		spottedVagueWords = ""
+
 	}
 	return issues
-
 }
 
 func (r MissingPremiseRule) Check(argument Argument) []Issue {
@@ -179,18 +187,16 @@ func (rule QuantificationRequiredRule) Check(argument Argument) []Issue {
 
 	premises := argument.Premises
 
-	for i, p := range premises {
+	for _, p := range premises {
 
 		if regexQuantificationPhrase.MatchString(p.Text) && !regexDigit.MatchString(p.Text) {
 
-			//TODO: raise one issue per premise and list all hits
 			issues = append(issues, Issue{
 				RuleID:   rule.ID(),
 				Severity: SeverityError,
-				Message:  fmt.Sprintf("premise %d '%q' uses quantification but omits reference to actual numbers", i+1, p.Text),
+				Message:  fmt.Sprintf("Premise %s '%q' uses quantification but omits reference to actual numbers", p.Id, p.Text),
 				Hint:     "Provide a number (e.g., ‘18%’) or sample size supporting significant/most/increase'",
 			})
-
 		}
 	}
 
