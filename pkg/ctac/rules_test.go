@@ -261,3 +261,65 @@ func TestQuantificationRequiredRule(t *testing.T) {
 
 	}
 }
+
+func TestEmotionalLanguageDetector(t *testing.T) {
+
+	rule := EmotionalLanguageDetector{}
+
+	cases := TestCases{{
+		name: "Claim using emotional language should raise one issue",
+		argument: Argument{
+			Title: "Emotional argument for banning working from home",
+			Premises: []Premise{
+				{Text: "Obviously, a significant portion of workers slack off when working from home", Confidence: "medium"},
+				{Text: "Productivity decreases by 20 % when working from home", Confidence: "low"},
+			},
+			Conclusion: Conclusion{
+				Text: "Working from home should be banned", Modality: "should", Confidence: "medium",
+			},
+		},
+		wantIssues: 1,
+	},
+		{
+			name: "Two emotional language in same premise",
+			argument: Argument{
+				Title: "Emotional argument with two emotional terms for banning working from home",
+				Premises: []Premise{
+					{Text: "Obviously a portion of workers awfully slack off when working from home", Confidence: Medium},
+					{Text: "Productivity decreases when working from home", Confidence: Low},
+				},
+				Conclusion: Conclusion{
+					Text: "Working from home should be banned", Modality: ModalityShould, Confidence: Medium,
+				},
+			},
+			wantIssues: 1,
+		},
+
+		{
+			name: "Emotional language in two premises",
+			argument: Argument{
+				Title: "Emotional argument with two emotional terms for banning working from home",
+				Premises: []Premise{
+					{Text: "Obviously a portion of workers awfully slack off when working from home", Confidence: Medium},
+					{Text: "Clearly Productivity decreases when working from home", Confidence: Low},
+				},
+				Conclusion: Conclusion{
+					Text: "Working from home should be banned", Modality: ModalityShould, Confidence: Medium,
+				},
+			},
+			wantIssues: 2,
+		}}
+	for _, tc := range cases {
+
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			issues := rule.Check(tc.argument)
+			if got := len(issues); got != tc.wantIssues {
+				t.Fatalf("Testing argument %q: got %d issue%s but we wanted %d", tc.argument.Title, got, plural(got), tc.wantIssues)
+			}
+		})
+
+	}
+}

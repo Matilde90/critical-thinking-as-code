@@ -32,13 +32,14 @@ type MissingConclusionRule struct{}
 type SinglePremiseRule struct{}
 type ModalityMismatchRule struct{}
 type QuantificationRequiredRule struct{}
+type EmotionalLanguageDetector struct{}
 
 func (r MissingPremiseRule) ID() string {
 	return "CTAC001_MISSING_PREMISES"
 }
 
 func (rule VaguenessDetector) ID() string {
-	return "CTAC002_VAGUENESS_DETECTOR"
+	return "CTAC002_VAGUENESS_DETECTED"
 }
 
 func (rule MissingConclusionRule) ID() string {
@@ -57,33 +58,62 @@ func (rule QuantificationRequiredRule) ID() string {
 	return "CTAC006_QUANTIFICATION_REQUIRED"
 }
 
+func (rule EmotionalLanguageDetector) ID() string {
+	return "CTAC007_EMOTIONAL_LANGUAGE_DETECTED"
+}
+
 type vaguePhrase struct {
-	phrase string
-	reg    *regexp.Regexp
+	Phrase string
+	Reg    *regexp.Regexp
 }
 
 var vaguePhrases = []vaguePhrase{
 	{
-		phrase: "someone",
-		reg:    regexp.MustCompile(`(?i)\bsomeone\b`),
+		Phrase: "someone",
+		Reg:    regexp.MustCompile(`(?i)\bsomeone\b`),
 	},
 	{
-		phrase: "some",
-		reg:    regexp.MustCompile(`(?i)\bsome\b`),
+		Phrase: "some",
+		Reg:    regexp.MustCompile(`(?i)\bsome\b`),
 	},
 	{
-		phrase: "everyone thinks",
-		reg:    regexp.MustCompile(`(?i)\beveryone thinks\b`),
+		Phrase: "everyone thinks",
+		Reg:    regexp.MustCompile(`(?i)\beveryone thinks\b`),
 	},
 	{
-		phrase: "maybe",
-		reg:    regexp.MustCompile(`(?i)\bmaybe\b`),
+		Phrase: "maybe",
+		Reg:    regexp.MustCompile(`(?i)\bmaybe\b`),
 	},
 	{
-		phrase: "everyone knows",
-		reg:    regexp.MustCompile(`(?i)\beveryone knows\b`),
+		Phrase: "everyone knows",
+		Reg:    regexp.MustCompile(`(?i)\beveryone knows\b`),
 	},
 }
+
+type emotionalLanguagePhrase struct {
+	Phrase string
+	Reg    *regexp.Regexp
+}
+
+var negativeEmotionWords = []string{"terrible", "horrible", "disastrous", "catastrophic", "evil", "awful", "tragic", "shocking", "outrageous"}
+var positiveEmotionWords = []string{"amazing", "brilliant", "fantastic", "heroic", "wonderful", "incredible", "terrific"}
+var persuasiveIntensifiers = []string{"obviously", "clearly", "undeniably", "absolutely", "definitively"}
+
+func buildPhrases(words []string) []emotionalLanguagePhrase {
+	phrases := make([]emotionalLanguagePhrase, 0, len(words))
+	for _, w := range words {
+		pattern := fmt.Sprintf(`(?i)\b%s`, w)
+		phrases = append(phrases, emotionalLanguagePhrase{
+			Phrase: w,
+			Reg:    regexp.MustCompile(pattern),
+		})
+	}
+	return phrases
+}
+
+var negativePhrases = buildPhrases(negativeEmotionWords)
+var positivePhrases = buildPhrases(positiveEmotionWords)
+var intensifierPhrases = buildPhrases(persuasiveIntensifiers)
 
 var regexDigit = regexp.MustCompile("[0-9]+")
 var regexQuantificationPhrase = regexp.MustCompile(`(?i)(\bsignificant|\bdecrease|\bmost\b|\bincrease|\bdecline\b|\bpercent(age?)\b|%|\bmore\b|\bless\b|\brate\b|\btrend\b)`)
@@ -97,9 +127,9 @@ func (rule VaguenessDetector) Check(argument Argument) []Issue {
 	for _, p := range premises {
 
 		for _, vaguePhrase := range vaguePhrases {
-			if vaguePhrase.reg.MatchString(p.Text) {
+			if vaguePhrase.Reg.MatchString(p.Text) {
 
-				spottedVagueWords = spottedVagueWords + ", " + vaguePhrase.phrase
+				spottedVagueWords = spottedVagueWords + ", " + vaguePhrase.Phrase
 			}
 		}
 		if len(spottedVagueWords) > 0 {
@@ -203,6 +233,50 @@ func (rule QuantificationRequiredRule) Check(argument Argument) []Issue {
 	return issues
 }
 
+func (rule EmotionalLanguageDetector) Check(argument Argument) []Issue {
+
+	var issues []Issue
+
+	premises := argument.Premises
+	var spottedEmotionalWords string
+
+	for _, p := range premises {
+
+		for _, np := range negativePhrases {
+			if np.Reg.MatchString(p.Text) {
+				spottedEmotionalWords = spottedEmotionalWords + ", " + np.Phrase
+			}
+		}
+
+		for _, pp := range positivePhrases {
+			if pp.Reg.MatchString(p.Text) {
+				spottedEmotionalWords = spottedEmotionalWords + ", " + pp.Phrase
+			}
+		}
+
+		for _, ip := range intensifierPhrases {
+			if ip.Reg.MatchString(p.Text) {
+				spottedEmotionalWords = spottedEmotionalWords + ", " + ip.Phrase
+			}
+		}
+
+		if len(spottedEmotionalWords) > 0 {
+			issues = append(issues, Issue{
+				RuleID:   rule.ID(),
+				Severity: SeverityError,
+				Message:  fmt.Sprintf("Premise %s '%q' uses emotional language %s", p.Id, p.Text, strings.TrimLeft(spottedEmotionalWords, " ,")),
+				Hint:     "Please rewrite the premises without using unnecessary emotional language'",
+			})
+		}
+
+		spottedEmotionalWords = ""
+
+	}
+
+	return issues
+
+}
+
 func RunAllRules(a Argument) []Issue {
 	rules := []Rule{
 		MissingPremiseRule{},
@@ -211,6 +285,7 @@ func RunAllRules(a Argument) []Issue {
 		SinglePremiseRule{},
 		ModalityMismatchRule{},
 		QuantificationRequiredRule{},
+		EmotionalLanguageDetector{},
 	}
 	var issues []Issue
 
