@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 type Rule interface {
@@ -277,7 +278,7 @@ func (rule EmotionalLanguageDetector) Check(argument Argument) []Issue {
 
 }
 
-func RunAllRules(a Argument) []Issue {
+func RunAllRulesSequential(a Argument) []Issue {
 	rules := []Rule{
 		MissingPremiseRule{},
 		VaguenessDetector{},
@@ -293,4 +294,79 @@ func RunAllRules(a Argument) []Issue {
 		issues = append(issues, r.Check(a)...)
 	}
 	return issues
+}
+
+func RunAllRulesParallel(a Argument, maxWorkers int) []Issue {
+	rules := []Rule{
+		MissingPremiseRule{},
+		VaguenessDetector{},
+		MissingConclusionRule{},
+		SinglePremiseRule{},
+		ModalityMismatchRule{},
+		QuantificationRequiredRule{},
+		EmotionalLanguageDetector{},
+	}
+
+	type job struct {
+		idx  int
+		rule Rule
+	}
+
+	type result struct {
+		idx    int
+		issues []Issue
+	}
+
+	jobs := make(chan job, len(rules))
+	results := make(chan result, len(rules))
+
+	worker := func(id int, jobs <-chan job, results chan<- result) {
+		for j := range jobs {
+			issues := j.rule.Check(a)
+
+			results <- result{
+				idx:    j.idx,
+				issues: issues,
+			}
+		}
+	}
+
+	if maxWorkers <= 0 || maxWorkers > len(rules) {
+		maxWorkers = len(rules)
+	}
+
+	var waitGroup sync.WaitGroup
+	waitGroup.Add((maxWorkers))
+
+	// start workers with a wait group
+	for w := 0; w < maxWorkers; w++ {
+		go func(id int) {
+			defer waitGroup.Done()
+			worker(id, jobs, results)
+		}(w)
+	}
+
+	for i, r := range rules {
+		jobs <- job{idx: i, rule: r}
+	}
+
+	close(jobs)
+
+	go func() {
+		waitGroup.Wait()
+		close(results)
+	}()
+
+	collected := make([][]Issue, len(rules))
+
+	for res := range results {
+		collected[res.idx] = res.issues
+	}
+
+	var all []Issue
+	for _, iss := range collected {
+		all = append(all, iss...)
+	}
+
+	return all
 }
