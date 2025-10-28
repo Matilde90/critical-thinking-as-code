@@ -35,3 +35,4 @@ func FormatIssueMessage(issues []Issue) string {
 	}
 	return formattedIssues
 }
+

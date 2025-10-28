@@ -103,7 +103,7 @@ var persuasiveIntensifiers = []string{"obviously", "clearly", "undeniably", "abs
 func buildPhrases(words []string) []emotionalLanguagePhrase {
 	phrases := make([]emotionalLanguagePhrase, 0, len(words))
 	for _, w := range words {
-		pattern := fmt.Sprintf(`(?i)\b%s`, w)
+		pattern := fmt.Sprintf(`(?i)\b%s\b`, regexp.QuoteMeta(w))
 		phrases = append(phrases, emotionalLanguagePhrase{
 			Phrase: w,
 			Reg:    regexp.MustCompile(pattern),
@@ -144,7 +144,6 @@ func (rule VaguenessDetector) Check(argument Argument) []Issue {
 		}
 
 		spottedVagueWords = ""
-
 	}
 	return issues
 }

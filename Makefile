@@ -1,10 +1,11 @@
 .PHONY: test
 
+ARGS ?=
 build:
 	go build -o bin/ctac ./cmd/ctac
 
 run: build
-	./bin/ctac
+	./bin/ctac $(ARGS)
 
 test:
 	go test ./...
