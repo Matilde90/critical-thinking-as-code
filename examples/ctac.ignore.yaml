@@ -1,0 +1,5 @@
+rules:
+  - CTAC002_VAGUENESS_DETECTED
+
+reason:
+  - Rule CTAC002_VAGUENESS_DETECTED often flags terms that are acceptable in our context.

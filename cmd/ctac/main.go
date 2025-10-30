@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	outputFile := flag.String("outputFile", "", "Path to results JSON file")
 	pretty := flag.Bool("pretty", false, "Pretty print JSON")
 	silent := flag.Bool("silent", false, "Quite mode to silence output written to standard out")
+	ignoreFile := flag.String("ignoreFile", "", "Path to ignore file")
 
 	flag.Parse()
 
@@ -36,7 +38,6 @@ func main() {
 		fmt.Println(ctac.SummariseArgument(*argument))
 	}
 
-
 	var issues []ctac.Issue
 	if *parallel {
 		fmt.Println("Running all rules in parallel")
@@ -45,15 +46,25 @@ func main() {
 		issues = ctac.RunAllRulesSequential(*argument)
 	}
 
+	var filteredIssues []ctac.Issue
+	ignoreSpec, err := ctac.LoadIgnore(*ignoreFile)
+	if err != nil {
+		log.Fatalf("Load ignore file error: %v", err)
+	}
+	for _, issue := range issues {
+		if !slices.Contains(ignoreSpec.Rules, issue.RuleID) {
+			filteredIssues = append(filteredIssues, issue)
+		}
+	}
 	if !*silent {
-	fmt.Println(ctac.FormatIssueMessage(issues))
+		fmt.Println(ctac.FormatIssueMessage(filteredIssues))
 	}
 	if *outputFile != "" {
 		var b []byte
 		if *pretty {
-			b, err = json.MarshalIndent(issues, "", " ")
+			b, err = json.MarshalIndent(filteredIssues, "", " ")
 		} else {
-		b, err = json.Marshal(issues)
+			b, err = json.Marshal(filteredIssues)
 		}
 		if err != nil {
 			log.Fatalf("error encoding JSON: %v", err)
