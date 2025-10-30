@@ -17,7 +17,7 @@ func main() {
 	workers := flag.Int("workers", 3, "Max concurrent workers (only used with parallel flag set as true)")
 	outputFile := flag.String("outputFile", "", "Path to results JSON file")
 	pretty := flag.Bool("pretty", false, "Pretty print JSON")
-	silent := flag.Bool("silent", false, "Quite mode to silence output written to standard out")
+	silent := flag.Bool("silent", false, "Quiet mode to silence output written to standard out")
 	ignoreFile := flag.String("ignoreFile", "", "Path to ignore file")
 
 	flag.Parse()
@@ -40,7 +40,9 @@ func main() {
 
 	var issues []ctac.Issue
 	if *parallel {
-		fmt.Println("Running all rules in parallel")
+		if !*silent{
+			fmt.Println("Running all rules in parallel")
+		}
 		issues = ctac.RunAllRulesParallel(*argument, *workers)
 	} else {
 		issues = ctac.RunAllRulesSequential(*argument)
@@ -62,13 +64,15 @@ func main() {
 	if *outputFile != "" {
 		var b []byte
 		if *pretty {
-			b, err = json.MarshalIndent(filteredIssues, "", " ")
+			b, err = json.MarshalIndent(filteredIssues, "", "  ")
 		} else {
 			b, err = json.Marshal(filteredIssues)
 		}
 		if err != nil {
 			log.Fatalf("error encoding JSON: %v", err)
 		}
-		os.WriteFile(*outputFile, b, 0o644)
+		if err := os.WriteFile(*outputFile, b, 0o644) ; err != nil {
+			log.Fatalf("Write outputfile: %v", err)
+		}
 	}
 }

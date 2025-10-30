@@ -1,7 +1,7 @@
 package ctac
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"gopkg.in/yaml.v3"
 )
@@ -38,7 +38,7 @@ func LoadIgnore(filePath string) (*IgnoreSpec, error) {
 		return &ignoreSpec, nil
 	}
 	if _, err := os.Stat(ignoreFilePath); err != nil {
-		log.Fatalf("No such file or directory for ignore file at %s. Please provide a valid path to your ignore file", filePath)
+		return nil, fmt.Errorf("no such file or directory for ignore file at %s. Please provide a valid path to your ignore file", ignoreFilePath)
 	}
 	data, err := os.ReadFile(ignoreFilePath)
 	if err != nil {
