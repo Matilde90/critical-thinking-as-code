@@ -78,11 +78,9 @@ func analyseCmd(args []string) {
 	}
 
 	ignored := make(map[string]bool, len(ignoreSpec.Rules))
-	fmt.Printf("%v", ignored)
 	for _, rule := range ignoreSpec.Rules {
 		ignored[rule] = true
 	}
-	fmt.Printf("%v", ignored)
 	for _, issue := range issues {
 		fmt.Printf("Processing issue %v with rule id %s", issue, issue.RuleID)
 		if _, skip := ignored[issue.RuleID]; !skip {
@@ -126,6 +124,10 @@ func ignoreCmd(args []string) {
 		fmt.Fprintf(os.Stderr, "unknown ignore subcommand %q\n", args[0])
 		os.Exit(2)
 	}
+}
+
+func createCmd(args []string){
+
 }
 
 func main() {
