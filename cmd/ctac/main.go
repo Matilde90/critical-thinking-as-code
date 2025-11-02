@@ -27,7 +27,7 @@ func usage() {
 }
 
 func analyseCmd(args []string) {
-	flagSet := flag.NewFlagSet("analsze", flag.ContinueOnError)
+	flagSet := flag.NewFlagSet("analyse", flag.ContinueOnError)
 	flagSet.SetOutput(os.Stderr)
 
 	inputFile := flagSet.String("inputFile", "", "Path to input argument yaml file")
@@ -109,6 +109,25 @@ func analyseCmd(args []string) {
 	}
 }
 
+func ignoreCmd(args []string) {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" {
+		fmt.Println(`Usage:
+  ctac ignore print-template   # print a template to stdout`)
+		return
+	}
+	switch args[0] {
+	case "print-template":
+		fmt.Println(`# ctac.ignore.yaml
+		rules:
+			- CTAC002_VAGUENESS_DETECTED
+		reason:
+			- "Describe why this ignore exists"`)
+	default:
+		fmt.Fprintf(os.Stderr, "unknown ignore subcommand %q\n", args[0])
+		os.Exit(2)
+	}
+}
+
 func main() {
 	log.SetFlags(0)
 	log.SetOutput(os.Stderr)
@@ -122,7 +141,7 @@ func main() {
 	case "analyze", "analyse":
 		analyseCmd(os.Args[2:])
 	case "ignore":
-		fmt.Print("ignore")
+		ignoreCmd(os.Args[2:])
 	case "create":
 		fmt.Print("create")
 	case "help", "-h", "--help":
