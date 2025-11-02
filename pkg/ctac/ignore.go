@@ -2,8 +2,8 @@ package ctac
 
 import (
 	"fmt"
-	"os"
 	"gopkg.in/yaml.v3"
+	"os"
 )
 
 type IgnoreSpec struct {

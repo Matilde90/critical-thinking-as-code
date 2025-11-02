@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"slices"
 )
 
 func main() {
@@ -40,7 +39,7 @@ func main() {
 
 	var issues []ctac.Issue
 	if *parallel {
-		if !*silent{
+		if !*silent {
 			fmt.Println("Running all rules in parallel")
 		}
 		issues = ctac.RunAllRulesParallel(*argument, *workers)
@@ -53,11 +52,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Load ignore file error: %v", err)
 	}
+
+	ignored := make(map[string]bool, len(ignoreSpec.Rules))
+	fmt.Printf("%v", ignored)
+	for _, rule := range ignoreSpec.Rules {
+		ignored[rule] = true
+	}
+	fmt.Printf("%v", ignored)
 	for _, issue := range issues {
-		if !slices.Contains(ignoreSpec.Rules, issue.RuleID) {
+		fmt.Printf("Processing issue %v with rule id %s", issue, issue.RuleID)
+		if _, skip := ignored[issue.RuleID]; !skip {
 			filteredIssues = append(filteredIssues, issue)
 		}
 	}
+
 	if !*silent {
 		fmt.Println(ctac.FormatIssueMessage(filteredIssues))
 	}
@@ -71,7 +79,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("error encoding JSON: %v", err)
 		}
-		if err := os.WriteFile(*outputFile, b, 0o644) ; err != nil {
+		if err := os.WriteFile(*outputFile, b, 0o644); err != nil {
 			log.Fatalf("Write outputfile: %v", err)
 		}
 	}
