@@ -1,6 +1,6 @@
 .PHONY: test
 
-ARGS ?=
+ARGS ?= analyse -inputFile examples/decision.yaml
 build:
 	go build -o bin/ctac ./cmd/ctac
 

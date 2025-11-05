@@ -1,12 +1,15 @@
-title: "Quantum mechanics is the best theory"
+title: "Street violence is worsening"
 premises:
 - id: P1
-  text: "Everyone thinks that quantum mechanics predicts terrific experimental results with high accuracy."
+  text: "Yesterday there was a major violent incident."
+  confidence: high
+- id: P2
+  text: "People do not feel safe in the streets."
   confidence: medium
 - id: P2
-  text: "Other theories cannot explain this exceptional phenomena as well as quantum mechanics."
+  text: "People used to feel safer."
   confidence: low
 conclusion:
-  text: "Quantum mechanics is the best theory"
+  text: "Street violence is worsening."
   confidence: high
   modality: must
