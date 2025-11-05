@@ -126,10 +126,6 @@ func ignoreCmd(args []string) {
 	}
 }
 
-func createCmd(args []string){
-
-}
-
 func main() {
 	log.SetFlags(0)
 	log.SetOutput(os.Stderr)
@@ -144,8 +140,6 @@ func main() {
 		analyseCmd(os.Args[2:])
 	case "ignore":
 		ignoreCmd(os.Args[2:])
-	case "create":
-		fmt.Print("create")
 	case "help", "-h", "--help":
 		usage()
 	default:
