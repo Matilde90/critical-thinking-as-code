@@ -1,9 +1,8 @@
 package ctac
 
 import (
-	"os"
-
 	"gopkg.in/yaml.v3"
+	"os"
 )
 
 func Loader(filePath string) (*Argument, error) {

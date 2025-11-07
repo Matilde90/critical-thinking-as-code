@@ -9,6 +9,10 @@ import (
 	"os"
 )
 
+var (
+	version = "dev" // set via -ldflags
+)
+
 func usage() {
 	fmt.Println(`ctac -- Critical Thinking as Code
 	
@@ -16,11 +20,13 @@ func usage() {
 		ctac analyse	[flags]		Analyse an argument file
 		ctac ignore		[subcmd]	Manage ignore file
 		ctac create		[subcmd]	Create argument file
+		ctac version				Version
 	
 	Examples:
 		ctac analyse -inputFile file.yaml -outputFile results.md -pretty
 		ctac analyse -inputFile file.yaml parallel -workers 2 -outputFile results.md -pretty
 		ctac ignore print-template
+		ctac version
 
 	Run "ctac <command> -h" for more information about a command.`)
 
@@ -129,7 +135,6 @@ func ignoreCmd(args []string) {
 func main() {
 	log.SetFlags(0)
 	log.SetOutput(os.Stderr)
-	fmt.Println(os.Args)
 	if len(os.Args) < 2 {
 		usage()
 		os.Exit(2)
@@ -140,8 +145,11 @@ func main() {
 		analyseCmd(os.Args[2:])
 	case "ignore":
 		ignoreCmd(os.Args[2:])
-	case "help", "-h", "--help":
+	case "help", "-h", "--help", "man":
 		usage()
+	case "version", "-v":
+		fmt.Printf("ctac %s\n", version)
+		os.Exit(0)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", os.Args[1])
 	}

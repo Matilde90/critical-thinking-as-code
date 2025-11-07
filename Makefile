@@ -1,14 +1,24 @@
-.PHONY: test
+BIN := bin/ctac
+ARGS ?= version
+VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo v0.1.0-alpha.1)
+LDFLAGS := -X main.version=$(VERSION)
 
-ARGS ?= analyse -inputFile examples/decision.yaml
+.PHONY: build run clean test lint
+
 build:
-	go build -o bin/ctac ./cmd/ctac
+	go build -ldflags "$(LDFLAGS)" -o $(BIN) ./cmd/ctac
 
 run: build
-	./bin/ctac $(ARGS)
+	./$(BIN) $(ARGS)
+
+install:
+	go install -ldflags "$(LDFLAGS)" ./cmd/ctac
 
 test:
 	go test ./...
 
 lint:
 	go vet ./...
+
+clean:
+	rm -f $(BIN)
