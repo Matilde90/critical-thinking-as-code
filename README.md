@@ -15,7 +15,7 @@ It will let you codify arguments as structured data and it will give instant and
 
 ## Installation
 
-go install .cmd/ctac
+go install ./cmd/ctac
 
 Put the line below in your ~/.bashrc or ~/.zshrc to persist it
 export PATH="$(go env GOPATH)/bin:$PATH"
