@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"ctac/pkg/ctac"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 var (
@@ -30,6 +32,116 @@ func usage() {
 
 	Run "ctac <command> -h" for more information about a command.`)
 
+}
+func writeConfidenceLevel(file *os.File, scanner *bufio.Scanner) {
+	fmt.Print("Please provide the confidence level:\n1.high\n2.medium\n3.low\ndefault: medium\n")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read confidence level: %s", scanner.Err())
+	}
+
+	switch strings.ToLower(strings.TrimSpace(scanner.Text())) {
+	case "1", "high", "h", "H":
+		fmt.Fprintf(file, "    confidence: high\n")
+	case "2", "medium", "m", "M":
+		fmt.Fprintf(file, "    confidence: medium\n")
+	case "3", "low", "l", "L":
+		fmt.Fprintf(file, "    confidence: low\n")
+	default:
+		fmt.Fprintf(file, "    confidence: medium\n")
+	}
+}
+func writePremise(file *os.File, id int) {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Please provide the premise text (single line):")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read premise: %v", scanner.Err())
+	}
+
+	premise := strings.TrimSpace(scanner.Text())
+	fmt.Fprintf(file, "-   id: P%d\n    text: %s\n", id, premise)
+
+	writeConfidenceLevel(file, scanner)
+
+	fmt.Println("Do you want to add another premise [y/n]")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read answer %v", scanner.Err())
+	}
+
+	switch strings.ToLower(strings.TrimSpace(scanner.Text())) {
+	case "yes", "y":
+		writePremise(file, id+1)
+	case "no", "n":
+		return
+	default:
+		fmt.Print("I do not recognise this.")
+		writePremise(file, id)
+	}
+}
+
+func writeModality(file *os.File, scanner *bufio.Scanner) {
+	fmt.Print("Please provide the modality:\n1.must\n2.should\n3.could\ndefault: should\n")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read modality: %s", scanner.Err())
+	}
+
+	switch strings.ToLower(strings.TrimSpace(scanner.Text())) {
+	case "1", "must", "m":
+		fmt.Fprintf(file, "    modality: must\n")
+	case "2", "should", "s":
+		fmt.Fprintf(file, "    modality: should\n")
+	case "3", "could", "c":
+		fmt.Fprintf(file, "    modality: could\n")
+	default:
+		fmt.Fprintf(file, "    modality: should\n")
+	}
+}
+
+func writeConclusion(file *os.File) {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Please provide the conclusion text (single line):")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read the conclusion. Encountered error: %v", scanner.Err())
+	}
+	fmt.Fprintf(file, "conclusion:\n    text: %v\n", strings.TrimSpace(scanner.Text()))
+	writeConfidenceLevel(file, scanner)
+	writeModality(file, scanner)
+}
+
+func createCmd(args []string) {
+	scanner := bufio.NewScanner(os.Stdin)
+	flagSet := flag.NewFlagSet("create", flag.ContinueOnError)
+	flag.CommandLine.SetOutput(os.Stderr)
+	filePath := flagSet.String("filePath", "", "Path to input argument yaml file. Creates or truncates the name file with the argument provided in the interactive steps")
+
+	if err := flagSet.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return
+		}
+		os.Exit(2)
+	}
+
+	log.SetFlags(0)
+
+	if *filePath == "" {
+		log.Fatalf("error: Path to input argument yaml file is required via -filePath")
+	}
+
+	file, err := os.Create(*filePath)
+	if err != nil {
+		log.Fatalf("Failed to create input file: encountered error: %v", err)
+	}
+	fmt.Println("Please provide a title")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read title. Encountered error: %v", scanner.Err())
+	}
+	if err != nil {
+		log.Fatalf("Error scanning the title: %s", err)
+	}
+	fmt.Fprintf(file, "title: %v\npremises:\n", scanner.Text())
+	id := 1
+	writePremise(file, id)
+	writeConclusion(file)
+	file.Close()
 }
 
 func analyseCmd(args []string) {
@@ -141,9 +253,11 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "analyze", "analyse":
+	case "create", "-c":
+		createCmd(os.Args[2:])
+	case "analyze", "analyse", "-a":
 		analyseCmd(os.Args[2:])
-	case "ignore":
+	case "ignore", "-i":
 		ignoreCmd(os.Args[2:])
 	case "help", "-h", "--help", "man":
 		usage()
