@@ -1,15 +1,15 @@
 title: "Street violence is worsening"
 premises:
-- id: P1
-  text: "Yesterday there was a major violent incident."
-  confidence: high
-- id: P2
-  text: "People do not feel safe in the streets."
-  confidence: medium
-- id: P2
-  text: "People used to feel safer."
-  confidence: low
+-   id: P1
+    text: "Yesterday there was a major violent incident."
+    confidence: high
+-   id: P2
+    text: "People do not feel safe in the streets."
+    confidence: medium
+-   id: P3
+    text: "People used to feel safer."
+    confidence: low
 conclusion:
-  text: "Street violence is worsening."
-  confidence: high
-  modality: must
+    text: "Street violence is worsening."
+    confidence: high
+    modality: must

@@ -5,6 +5,7 @@ type Modality string
 const (
 	ModalityMust   Modality = "must"
 	ModalityShould Modality = "should"
+	ModalityCould Modality = "could"
 )
 
 type Confidence string

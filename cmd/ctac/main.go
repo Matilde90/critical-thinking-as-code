@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"ctac/pkg/ctac"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 var (
@@ -24,12 +26,128 @@ func usage() {
 	
 	Examples:
 		ctac analyse -inputFile file.yaml -outputFile results.md -pretty
-		ctac analyse -inputFile file.yaml parallel -workers 2 -outputFile results.md -pretty
+		ctac analyse -inputFile file.yaml -parallel -workers 2 -outputFile results.md -pretty
 		ctac ignore print-template
+		ctac create -filePath myargument.yaml
 		ctac version
 
 	Run "ctac <command> -h" for more information about a command.`)
 
+}
+
+func writeConfidenceLevel(file *os.File, scanner *bufio.Scanner) {
+	fmt.Print("Please provide the confidence level:\n1.high\n2.medium\n3.low\ndefault: medium\n> ")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read confidence level: %s", scanner.Err())
+	}
+
+	switch strings.ToLower(strings.TrimSpace(scanner.Text())) {
+	case "1", "high", "h", "H":
+		fmt.Fprintf(file, "    confidence: high\n")
+	case "2", "medium", "m", "M":
+		fmt.Fprintf(file, "    confidence: medium\n")
+	case "3", "low", "l", "L":
+		fmt.Fprintf(file, "    confidence: low\n")
+	default:
+		fmt.Fprintf(file, "    confidence: medium\n")
+	}
+}
+func writePremise(file *os.File, id int, scanner *bufio.Scanner) {
+	fmt.Printf("Please provide the premise text (single line):\n> ")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read premise: %v", scanner.Err())
+	}
+
+	premise := strings.TrimSpace(scanner.Text())
+	fmt.Fprintf(file, "-   id: P%d\n    text: %q\n", id, premise)
+
+	writeConfidenceLevel(file, scanner)
+
+	fmt.Printf("Do you want to add another premise\n [y/n] > ")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read answer %v", scanner.Err())
+	}
+
+	switch strings.ToLower(strings.TrimSpace(scanner.Text())) {
+	case "yes", "y":
+		writePremise(file, id+1, scanner)
+	case "no", "n":
+		return
+	default:
+		fmt.Print("I do not recognise this. Assuming no")
+		return
+	}
+}
+
+func writeModality(file *os.File, scanner *bufio.Scanner) {
+	fmt.Print("Please provide the modality:\n1.must\n2.should\n3.could\ndefault: should\n> ")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read modality: %s", scanner.Err())
+	}
+
+	switch strings.ToLower(strings.TrimSpace(scanner.Text())) {
+	case "1", "must", "m":
+		fmt.Fprintf(file, "    modality: must\n")
+	case "2", "should", "s":
+		fmt.Fprintf(file, "    modality: should\n")
+	case "3", "could", "c":
+		fmt.Fprintf(file, "    modality: could\n")
+	default:
+		fmt.Println("I do not recognise this. Assuming modality: should")
+		fmt.Fprintf(file, "    modality: should\n")
+	}
+}
+
+func writeConclusion(file *os.File, scanner *bufio.Scanner) {
+	fmt.Printf("Please provide the conclusion text (single line):\n> ")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read the conclusion. Encountered error: %v", scanner.Err())
+	}
+	conclusion := strings.TrimSpace(scanner.Text())
+	fmt.Fprintf(file, "conclusion:\n    text: %q\n", conclusion)
+	writeConfidenceLevel(file, scanner)
+	writeModality(file, scanner)
+}
+
+func createCmd(args []string) {
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	flagSet := flag.NewFlagSet("create", flag.ContinueOnError)
+	flagSet.SetOutput(os.Stderr)
+	filePath := flagSet.String("filePath", "", "Path to input argument yaml file. Creates or truncates the name file with the argument provided in the interactive steps")
+
+	if err := flagSet.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return
+		}
+		os.Exit(2)
+	}
+
+	log.SetFlags(0)
+
+	if *filePath == "" {
+		log.Fatalf("error: Path to input argument yaml file is required via -filePath")
+	}
+
+	file, err := os.Create(*filePath)
+	if err != nil {
+		log.Fatalf("Failed to create input file: encountered error: %v", err)
+	}
+	fmt.Printf("Please provide a title\n>  ")
+	if !scanner.Scan() {
+		log.Fatalf("Could not read title. Encountered error: %v", scanner.Err())
+	}
+	fmt.Fprintf(file, "title: %q\npremises:\n", scanner.Text())
+	id := 1
+	writePremise(file, id, scanner)
+	writeConclusion(file, scanner)
+	fmt.Printf("yaml file created at %s\n", file.Name())
+
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("warning: closing file failed: %v", err)
+		}
+	}()
 }
 
 func analyseCmd(args []string) {
@@ -141,9 +259,11 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "analyze", "analyse":
+	case "create", "-c":
+		createCmd(os.Args[2:])
+	case "analyze", "analyse", "-a":
 		analyseCmd(os.Args[2:])
-	case "ignore":
+	case "ignore", "-i":
 		ignoreCmd(os.Args[2:])
 	case "help", "-h", "--help", "man":
 		usage()
