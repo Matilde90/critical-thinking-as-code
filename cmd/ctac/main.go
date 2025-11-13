@@ -155,10 +155,10 @@ func analyseCmd(args []string) {
 	flagSet.SetOutput(os.Stderr)
 
 	inputFile := flagSet.String("inputFile", "", "Path to input argument yaml file")
-	parallel := flagSet.Bool("parallel", false, "Run rules in parallel - false by default")
+	parallel := flagSet.Bool("parallel", false, "Run rules in parallel (default: false)")
 	workers := flagSet.Int("workers", 3, "Max concurrent workers (only used with parallel flag set as true)")
 	outputFile := flagSet.String("outputFile", "", "Path to results JSON file")
-	pretty := flagSet.Bool("pretty", false, "Pretty print JSON")
+	pretty := flagSet.Bool("pretty", false, "Pretty-print JSON")
 	silent := flagSet.Bool("silent", false, "Quiet mode to silence output written to standard out")
 	ignoreFile := flagSet.String("ignoreFile", "", "Path to ignore file")
 
