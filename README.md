@@ -2,7 +2,9 @@
 
 # Critical Thinking as Code
 
-Critical thinking as code (CTAC) is a command-line tool that helps engineers to keep track, record and strentghen their arguments using codified critical-thinking rules. It helps engineers to make reasoning explicit, clear and easy to version control. It lets codify arguments as structured data and it gives instant and transparent feedback on potential weak reasoning patterns.
+Critical thinking as code (CTAC) is a command-line tool that helps engineers track, record, and strentghen their arguments using codified critical-thinking rules. It helps engineers to make reasoning **explicit, clear and easy to version control**.
+
+CTAC lets engineers codify arguments as structured data and provides **instant and transparent feedback** on potential weak reasoning patterns.
 CTAC guides engineers to write their argument as YAML and will detect weaknesses such as:
 
 - Missing premises
@@ -13,9 +15,7 @@ CTAC guides engineers to write their argument as YAML and will detect weaknesses
 
 *Please note: this is work in progress. More rules and functionalities will be added in the coming weeks*
 
-## 🚀 Quickstart
-
-### 1. Install
+## 🚀 Install
 
 ```bash
 go install github.com/Matilde90/ctac@latest
@@ -53,6 +53,7 @@ ctac analyse -inputFile argument.yaml -pretty
 ```
 
 ## 🤖 Available Commands
+
 |Command | Description | Example |
 |--|--|--|
 | ctac create | Interactive wizard to create a YAML argument file| ctac create -filePath argument.yaml
@@ -94,15 +95,15 @@ ctac analyse -inputFile argument.yaml -pretty
 
 ## 🧠 Implemented Reasoning Rules
 
-| RuleID| Description | Severity |
-|---|--|---|
-| CTAC001_MISSING_PREMISES  | Flags arguments with no premise  | error |
-| CTAC002_VAGUENESS_DETECTED  |  Flags arguments whose premises use vague words | warning|
-| CTAC003_MISSING_CONCLUSION_RULE  | Flags arguments with no conclusion | error |
-| CTAC004_SINGLE_PREMISE_RULE  | Flags arguments that have only one premise as these are often weak | warning |
-| CTAC005_MODALITY_MISMATCH_RULE  | It flags arguments with a strong conclusion (modality must) with weak/insufficient support.  | error |
-| CTAC006_QUANTIFICATION_REQUIRED  | It flags argument with premises using quantification terms that omits reference to actual numbers  | error |
-| CTAC007_EMOTIONAL_LANGUAGE_DETECTED  | The argument uses emotional language as it can involve appeal to emotions bias | error|
+| RuleID                                | Description                                                                                | Severity  |
+|---                                    |--                                                                                          |---        |
+| CTAC001_MISSING_PREMISES              | Flags arguments with no premise                                                               | error  |
+| CTAC002_VAGUENESS_DETECTED            | Flags arguments whose premises use vague words                                                | warning|
+| CTAC003_MISSING_CONCLUSION_RULE       | Flags arguments with no conclusion                                                            | error  |
+| CTAC004_SINGLE_PREMISE_RULE           | Flags arguments that have only one premise as these are often weak                            | warning|
+| CTAC005_MODALITY_MISMATCH_RULE        | Flags arguments with a strong conclusion (modality must) with weak/insufficient support.      | error  |
+| CTAC006_QUANTIFICATION_REQUIRED       | Flags arguments with premises using quantifiers without numeric data                          | error  |
+| CTAC007_EMOTIONAL_LANGUAGE_DETECTED   | The argument uses emotional language as it can involve appeal to emotions bias                | error  |
 
 
 ## 🤝 Contributing
